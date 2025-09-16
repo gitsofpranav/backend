@@ -160,8 +160,8 @@ const logOutUser = asyncHandler(async (req,res) => {
    await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined
+            $unset: {
+                refreshToken: 1
             }
         },
         {
@@ -334,7 +334,7 @@ const getCurrentUser = asyncHandler(async(req,res) => {
 
   const getUserChannelProfile = asyncHandler(async(req,res) =>{
     const {username} = req.params
-    if(!username?.trim){
+    if(!username?.trim()){
         throw new ApiError(400, "usrname is missing")
     }
 
@@ -369,7 +369,7 @@ const getCurrentUser = asyncHandler(async(req,res) => {
                     $size: "$subscribedTo"
                 },
                 isSubscribed: {
-                    $condition: {
+                    $cond: {
                         if: {$in: [req.user?._id,"$subscribers.subscriber"]},
                         then: true,
                         else: false
@@ -407,42 +407,38 @@ const getCurrentUser = asyncHandler(async(req,res) => {
             }
         },
         {
-            $lookup: {
-                from: "videos",
-                localField: "watchHistory",
-                foreignField: "_id",
-                as: "watchHistory",
-
-                pipeline: [
-                    {
-                        $lookup: {
-                            from: "users",
-                            localField: "owner",
-                            foreignField: "_id",
-                            as: "owner" ,
-                            pipeline: [
-                                {
-                                    $project: {
-                                        fullName: 1,
-                                        username: 1,
-                                        avatar: 1
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        pipeline: {
-                            $addFields: {
-                                owner: {
-                                    $first: "$owner"
-                                }
-                            }
-                        }
-                    }
-                ]
+  $lookup: {
+    from: "videos",
+    localField: "watchHistory",
+    foreignField: "_id",
+    as: "watchHistory",
+    pipeline: [
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "owner",
+          pipeline: [
+            {
+              $project: {
+                fullName: 1,
+                username: 1,
+                avatar: 1
+              }
             }
+          ]
         }
+      },
+      {
+        $addFields: {
+          owner: { $first: "$owner" }
+        }
+      }
+    ]
+  }
+}
+
     ])
 
     return res
