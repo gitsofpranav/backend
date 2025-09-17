@@ -99,6 +99,11 @@ const updateTweet = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Tweet ID and content are required")
     }
 
+    if (!isValidObjectId(tweetId)) {
+        throw new ApiError(400, "Invalid Tweet ID");
+    }
+
+
     const updatedTweet = await Tweet.findByIdAndUpdate(
         {
             _id:tweetId,owner: user._id
@@ -135,6 +140,11 @@ const deleteTweet = asyncHandler(async (req, res) => {
     if(!tweetId){
         throw new ApiError(400, "Tweet is required")
     }
+
+    if (!isValidObjectId(tweetId)) {
+        throw new ApiError(400, "Invalid Tweet ID");
+    }
+    
     const tweet = await Tweet.findOne({
         _id: tweetId,
         owner: user._id
