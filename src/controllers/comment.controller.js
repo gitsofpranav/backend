@@ -84,6 +84,33 @@ const addComment = asyncHandler(async (req, res) => {
 
 const updateComment = asyncHandler(async (req, res) => {
     // TODO: update a comment
+    const { commentId } = req.params;
+    const { content } = req.body;
+    if(!isValidObjectId(commentId)){
+        throw new ApiError(401, "Invalid commentId")
+    }
+
+    if(!content?.trim()){
+        throw new ApiError(401,"Comment content is required");
+    }
+
+    const updatedComment = Comment.findOneAndUpdate(
+        {
+            _id: commentId, 
+            owner: req.user._id 
+        },
+        { $set: {content}},
+        {new: true}
+    )
+
+    if(!updateComment){
+        throw new ApiError(404, "Comment not found or not authorized")
+    }
+
+    return res 
+    .status(200)
+    .json(new ApiResponse(200,updatedComment, "Cmment updated successfully"))
+
 })
 
 const deleteComment = asyncHandler(async (req, res) => {
